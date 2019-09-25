@@ -1,0 +1,165 @@
+////////////////////////////
+//////// 3DBot I1D0 ////////
+////// By: David Odidi //////
+// YURS Sumobot Team Secretary //
+////////////////////////////
+
+///////////////////////
+// Test;
+// Motor Direction 
+// Speed vs. Strength
+// rotation
+///////////////////////
+
+#include <SparkFun_TB6612.h>
+
+// Motor Driver
+#define PWMA 2 // 1 was 5
+#define AIN2 3 // 2 was 4
+#define AIN1 4 // 3 was 2
+#define STBY 5 // 4 was 9
+#define BIN1 6 // 5 was 7
+#define BIN2 7 // 6 was 8
+#define PWMB 8 // 7 was 6
+
+// Peripherals
+#define butPin 9
+#define LEDpin 13
+#define IRpinA A5
+#define IRpinB A4
+
+// Motor Direction(+/-1)
+const int offsetA = 1;
+const int offsetB = 1;
+
+// Initializing motors (Was 1+2, now A+B) ??? A = Left, B = Right ???
+Motor motorA = Motor(AIN1, AIN2, PWMA, offsetA, STBY);
+Motor motorB = Motor(BIN1, BIN2, PWMB, offsetB, STBY);
+
+// Variables
+int but = HIGH; //LOW = pressed
+int IRvalA;
+int IRvalB;
+double IRdistA;
+double IRdistB;
+double IRdistAve;
+
+void setup()
+{
+  Serial.begin(19200);
+  pinMode(butPin, INPUT);
+  digitalWrite(butPin, HIGH);
+
+  // Wait for button press to begin 
+  Serial.println("Press button to begin...");
+  while (but == HIGH)
+  {
+    but = digitalRead(butPin);
+  }
+
+  // *** Calibrate Sensors Here ***
+  
+  // 5 sec countdown
+  for (int i = 5; i > 0; i--)
+  {
+    Serial.println(i, "...");
+    digitalWrite(LEDpin, HIGH);
+    delay(500);
+    digitalWrite(LEDpin, LOW);
+    delay(500);
+  }
+  Serial.println("GO...");
+}
+
+void loop()
+{
+    motorA.drive(255);
+    motorB.drive(255);
+  // Read IR sensor values and convert to distance
+ IRvalA = analogRead(IRpinA);
+  IRvalB = analogRead(IRpinB);
+  IRdistA = 187754 * pow(IRvalA, -1.51);
+  IRdistB = 187754 * pow(IRvalB, -1.51);
+  IRdistAve = (IRdistA + IRdistB)/2;
+  Serial.print("Left: ");
+  Serial.print(IRdistA );
+  Serial.print("cm | Right: "); 
+  Serial.print(IRdistB, "cm"); // cm?
+  Serial.print("");
+  // Delay for stability and precision of input
+  delay(500);
+
+
+  // Delay between motor commands???
+  
+  ///////  AI  ////////
+  ////// Motor A //////
+  // Reverse
+  if (IRdistA <= 15)
+  {
+    motorA.drive(-255);
+  }
+  // Forward
+  else if (IRdistA > 15 && IRdistA <= 30)
+  {
+    motorA.drive(255);
+  }
+  // Brake
+  else
+  {
+    motorA.brake();
+  }
+  ////// Motor B //////
+  // Reverse
+  if (IRdistB <= 15)
+  {
+    motorB.drive(-255);
+  }
+  // Forward
+  else if (IRdistB > 15 && IRdistB <= 30)
+  {
+    motorB.drive(255);
+  }
+  // Brake
+  else
+  {
+    motorB.brake();
+  }
+}
+
+void forward()
+{
+  motorA.drive(255);
+  motorB.drive(255);
+}
+
+void reverse()
+{
+  motorA.drive(-255);
+  motorB.drive(-255);
+}
+
+void brake()
+{
+  motorA.brake();
+  motorB.brake();
+}
+
+/***** Motor Controls *****
+ *  
+ *** Individual Forward ***
+ *  motorA.drive(255);
+ *  motorB.drive(255);
+ *  
+ *** Individual Reverse ***
+ *  motorA.drive(-255);
+ *  motorB.drive(-255);
+ *  
+ *** Directional ***
+ *  left(motorA, motorB, 100);
+ *  right(motorB, motorB, 100);
+ *  
+ *** Stop ***
+ *  motorA.brake();
+ *  motorBS.brake();
+ */
